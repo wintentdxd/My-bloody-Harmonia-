@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Bloody Harmonia</title>
+<style>
+:root{--bg:#0a0c11;--panel:#11141b;--line:#1f2530;--text:#e9edf4;--dim:#7d8799;--seg:#1a2029;--seg2:#151a22;
+--cur:#ffb020;--nbr:#22d3ee;--dia:#16384a;--key:#5ef2a6;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#142033 0,var(--bg) 60%);color:var(--text);
+font:15px/1.4 system-ui,"Segoe UI",sans-serif;display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100vh;overflow:hidden}
+.dim{color:var(--dim)}
+/* ---- header ---- */
+header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:6px 20px;border-bottom:1px solid var(--line)}
+#brand{display:flex;align-items:center;gap:10px;min-width:0}
+h1{font-size:14px;margin:0;letter-spacing:1.5px;white-space:nowrap}
+#dot{flex:none;width:10px;height:10px;border-radius:50%;background:#e5484d;box-shadow:0 0 8px #e5484d;transition:all .3s}
+#dot.on{background:#3dd68c;box-shadow:0 0 8px #3dd68c}
+#meter{flex:none;width:90px;height:6px;background:var(--seg);border-radius:3px;position:relative;overflow:hidden}
+#bar{height:100%;width:0;background:var(--nbr);transition:width .08s linear,background .2s}
+#bar.open{background:var(--cur)}
+#gate{position:absolute;top:0;bottom:0;width:2px;background:var(--text);opacity:.6}
+#status{color:var(--dim);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#state{display:flex;align-items:baseline;gap:20px;transition:opacity .4s}
+#nowchord{font-size:clamp(46px,10vh,96px);font-weight:800;line-height:1;color:var(--cur);text-shadow:0 0 28px rgba(255,176,32,.35);transition:opacity .4s}
+#nowkey{font-size:15px;color:var(--dim)}
+.tbadge{align-self:center;padding:4px 14px;border-radius:10px;font-size:clamp(20px,4.2vh,40px);font-weight:800;line-height:1.15;
+background:var(--nbr);color:#04222a;box-shadow:0 0 16px rgba(34,211,238,.35);transition:all .3s}
+.tbadge.base{background:var(--seg);color:var(--dim);box-shadow:none}
+.tbadge:empty{display:none}
+body.idle #state{opacity:.4}
+.tabs{display:flex;gap:6px;justify-self:end}
+.tab{padding:7px 16px;border:1px solid var(--line);background:var(--seg2);color:var(--dim);border-radius:999px;font:inherit;font-size:14px;cursor:pointer;transition:all .25s}
+.tab:hover{color:var(--text)}
+.tab.on{background:var(--nbr);border-color:var(--nbr);color:#04222a;font-weight:700;box-shadow:0 0 14px rgba(34,211,238,.35)}
+/* ---- main ---- */
+main{display:grid;grid-template-columns:55fr 45fr;gap:16px;padding:10px 20px;min-height:0}
+#circlecard{position:relative;min-height:0;display:flex;align-items:center;justify-content:center}
+#circle{width:100%;height:100%;display:block}
+#right{display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-height:0;overflow:auto}
+h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim)}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.nc{border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--seg2);transition:border-color .3s}
+.nc.dia{border-color:var(--key)}
+.nc.pri{border-color:var(--cur);box-shadow:0 0 14px rgba(255,176,32,.25)}
+.nc.pri h4 b{color:var(--cur)}
+.nc .star{color:var(--cur);font-size:12px}
+.nc h4{display:flex;gap:8px;align-items:baseline;margin:0 0 4px}
+.nc h4 b{font-size:26px;color:var(--nbr)}
+.nc h4 span{font-size:12px;color:var(--dim)}
+.swap{animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(5px)}}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0}
+.chip{padding:2px 9px;border-radius:999px;background:var(--seg);font-size:14px}
+.chip.hl{background:var(--cur);color:#1b1200;font-weight:700}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0}
+.shape{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;min-width:0;flex:1 1 230px;max-width:290px}
+.shape.rec{border-color:var(--key)}
+.badge{font-size:11px;color:var(--key)}
+/* графіка інструментів */
+.vo{display:flex;flex-direction:column;gap:2px;min-width:0}
+.piano{display:block;width:210px;max-width:100%;height:auto}
+.board svg{display:block;width:100%;max-width:262px;height:auto}
+.cap{font-size:12px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:2px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+input[type=number]{width:64px;padding:3px 6px;background:var(--seg);color:var(--text);border:1px solid var(--line);border-radius:6px}
+/* ---- circle ---- */
+.seg path{fill:var(--seg);stroke:var(--bg);stroke-width:2;transition:fill .45s ease,filter .45s ease,stroke .45s ease}
+.seg.inner path{fill:var(--seg2)}
+.seg text{fill:#aab3c2;font-size:23px;font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none;transition:fill .45s}
+.seg.inner text{font-size:18px}
+.seg.dia path{fill:var(--dia)}
+.seg.dia text{fill:var(--text)}
+.seg.key path{stroke:var(--key);stroke-width:3}
+.seg.nbr path{fill:var(--nbr);filter:drop-shadow(0 0 8px var(--nbr))}
+.seg.nbr text{fill:#04222a;font-weight:800}
+.seg.cur path{fill:var(--cur);filter:drop-shadow(0 0 14px var(--cur))}
+.seg.cur text{fill:#1b1200;font-weight:800;font-size:30px}
+.seg.pick path{stroke:var(--text);stroke-width:3}
+.seg{cursor:pointer}
+.link{stroke:var(--nbr);stroke-width:2;stroke-dasharray:4 5;opacity:0;animation:fade .6s forwards}
+@keyframes fade{to{opacity:.7}}
+#cname{fill:var(--cur);font-size:42px;font-weight:800;text-anchor:middle;dominant-baseline:central;transition:opacity .4s}
+#ckey{fill:var(--text);font-size:17px;font-weight:600;text-anchor:middle}
+#crole{fill:var(--dim);font-size:14px;text-anchor:middle}
+#circle.idle #cname,#circle.idle #ckey{opacity:.35}
+#pop{display:none;position:absolute;z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 10px 32px rgba(0,0,0,.65);width:min(330px,calc(100% - 16px));max-height:calc(100% - 16px);overflow:auto}
+#pop .row{flex-direction:column;align-items:stretch;gap:8px;flex-wrap:nowrap}
+#pop .shape{flex:none;max-width:none;width:100%}
+#pop .board svg{max-width:100%}
+#pop h4 small{font-weight:500;color:var(--dim);font-size:13px;margin-left:6px}
+#pop h4{margin:0 24px 6px 0;font-size:18px}
+#pop .x{position:absolute;top:6px;right:10px;cursor:pointer;color:var(--dim);background:none;border:0;font-size:16px}
+/* ---- footer timeline ---- */
+footer{display:flex;align-items:center;gap:14px;padding:8px 20px;border-top:1px solid var(--line)}
+footer h3{margin:0;flex:none}
+#tl{display:flex;gap:8px;flex:1;min-width:0;overflow:hidden}
+.h{padding:5px 16px;border-radius:10px;background:var(--seg);font-weight:700;font-size:17px;white-space:nowrap}
+.h.new{animation:pop .35s}
+.h:last-child{background:var(--cur);color:#1b1200}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+#allbtn{flex:none;padding:5px 12px;border:1px solid var(--line);background:var(--seg2);color:var(--dim);border-radius:8px;font:inherit;font-size:13px;cursor:pointer}
+#allpanel{display:none;position:fixed;right:20px;bottom:58px;width:min(520px,90vw);max-height:40vh;overflow:auto;z-index:6;box-shadow:0 8px 28px rgba(0,0,0,.6)}
+#allpanel.open{display:flex;flex-wrap:wrap;gap:5px}
+#allpanel span{padding:2px 9px;border-radius:8px;background:var(--seg);font-size:13px}
+#allpanel i{color:var(--dim);font-style:normal;font-size:11px;margin-right:4px}
+@media (max-width:900px){body{height:auto;overflow:auto;display:block}header{grid-template-columns:1fr}.tabs{justify-self:start}
+main{grid-template-columns:1fr}#circlecard{height:90vw}}
+</style>
+</head>
+<body>
+<header>
+  <div id="brand"><h1>MY BLOODY HARMONIA</h1><span id="dot"></span><div id="meter"><div id="bar"></div><div id="gate"></div></div><span id="status">підключення…</span></div>
+  <div id="state"><span id="nowchord">—</span><span id="nowtype" class="tbadge"></span><span id="nowkey">зіграйте акорд</span></div>
+  <div class="tabs" id="tabs"></div>
+</header>
+<main>
+  <div id="circlecard"><svg id="circle" viewBox="0 0 520 520" preserveAspectRatio="xMidYMid meet"></svg><div id="pop"></div></div>
+  <div id="right">
+    <div class="panel"><h3>Зараз грає</h3><div id="now"></div></div>
+    <div class="panel"><h3>Куди перейти далі</h3><div class="cards" id="next"></div></div>
+  </div>
+</main>
+<footer>
+  <h3>Прогресія</h3><div id="tl"></div><button id="allbtn">Усі (0) ▴</button>
+  <div class="panel" id="allpanel"></div>
+</footer>
+<script>
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NS='http://www.w3.org/2000/svg',CX=260,CY=260,TABS={guitar:'Гітара',bass:'Бас',keys:'Клавіші',solo:'Соло'};
+const RING={outer:[148,252],inner:[84,144]};
+const el=(t,a={},p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e};
+const $=id=>document.getElementById(id);
+const pol=(r,deg)=>{const a=(deg-90)*Math.PI/180;return[CX+r*Math.cos(a),CY+r*Math.sin(a)]};
+const swap=e=>{e.classList.remove('swap');void e.offsetWidth;e.classList.add('swap')};
+const chips=(arr,hl=[])=>`<div class="chips">${arr.filter(Boolean).map(n=>`<span class="chip${hl.includes(n)?' hl':''}">${n}</span>`).join('')}</div>`;
+
+/* ---------- коло ---------- */
+const segs={outer:[],inner:[]},svg=$('circle');
+for(const ring of ['outer','inner']){
+  const [r0,r1]=RING[ring];
+  for(let i=0;i<12;i++){
+    const major=(i*7)%12,name=ring==='outer'?NOTES[major]:NOTES[(major+9)%12]+'m';
+    const g=el('g',{class:'seg '+ring},svg);
+    const [a,b,c,d]=[pol(r1,i*30-14),pol(r1,i*30+14),pol(r0,i*30+14),pol(r0,i*30-14)];
+    el('path',{d:`M${a} A${r1} ${r1} 0 0 1 ${b} L${c} A${r0} ${r0} 0 0 0 ${d} Z`},g);
+    const [tx,ty]=pol((r0+r1)/2,i*30);
+    el('text',{x:tx,y:ty},g).textContent=name;
+    g.onclick=e=>{e.stopPropagation();showPop(name,g,e)};
+    segs[ring][i]={g,x:tx,y:ty};
+  }
+}
+const links=el('g',{},svg);
+const cname=el('text',{id:'cname',x:CX,y:CY-18},svg);
+const ckey=el('text',{id:'ckey',x:CX,y:CY+22},svg);
+const crole=el('text',{id:'crole',x:CX,y:CY+44},svg);
+
+function paintCircle(adv){
+  document.querySelectorAll('.seg').forEach(s=>s.classList.remove('cur','nbr','dia','key'));
+  links.innerHTML='';
+  if(!adv)return;
+  const k=adv.key;
+  if(k){
+    const p=(k.major_tonic*7)%12;
+    for(const d of [-1,0,1])for(const ring of ['outer','inner'])segs[ring][(p+d+12)%12].g.classList.add('dia');
+    segs.outer[p].g.classList.add('key');segs.inner[p].g.classList.add('key');
+  }
+  const c=adv.circle,cur=segs[c.current.ring][c.current.pos];
+  for(const n of c.neighbors){
+    const s=segs[n.ring][n.pos];s.g.classList.add('nbr');
+    el('line',{class:'link',x1:cur.x,y1:cur.y,x2:s.x,y2:s.y},links);
+  }
+  cur.g.classList.add('cur');
+  cname.textContent=adv.chord;ckey.textContent=k?k.name:'';crole.textContent=adv.role?'функція: '+adv.role:'';
+}
+
+/* ---------- піаніно ---------- */
+function pianoSVG(midi,rootPc){
+  const lo=Math.min(...midi),start=Math.floor(lo/12)*12,WH=[0,2,4,5,7,9,11],ww=14,wh=56,bw=9,bh=34,N=25,on=new Set(midi);
+  const clr=pc=>pc===rootPc?'var(--cur)':'var(--nbr)';
+  let whites='',blacks='',wi=0;
+  for(let k=0;k<N;k++){
+    const m=start+k,pc=m%12,pr=on.has(m);
+    if(WH.includes(pc)){
+      const x=wi*ww;
+      whites+=`<rect class="${pr?'on':''}" x="${x}" y="0" width="${ww}" height="${wh}" rx="2" style="fill:${pr?clr(pc):'#e9edf4'};stroke:#6b7385"/>`;
+      if(pr)whites+=`<text x="${x+ww/2}" y="${wh-5}" font-size="8" font-weight="700" text-anchor="middle" style="fill:#04222a">${NOTES[pc]}</text>`;
+      wi++;
+    }else{
+      const x=wi*ww-bw/2;
+      blacks+=`<rect class="${pr?'on':''}" x="${x}" y="0" width="${bw}" height="${bh}" rx="1.5" style="fill:${pr?clr(pc):'#1b1f27'};stroke:#000"/>`;
+      if(pr)blacks+=`<text x="${x+bw/2}" y="${bh-5}" font-size="6.5" font-weight="700" text-anchor="middle" style="fill:#04222a">${NOTES[pc]}</text>`;
+    }
+  }
+  return`<svg class="piano" viewBox="0 0 ${wi*ww} ${wh}">${whites}${blacks}</svg>`;
+}
+/* ---------- гриф (бас 4 струни / гітара 6 струн): горизонтально ---------- */
+const ROLE_CLR={root:'var(--cur)',fifth:'var(--nbr)',octave:'var(--key)',seventh:'#c084fc',scale:'var(--nbr)',tone:'#7aa7ff'};
+const ROLE_TXT={root:'корінь',fifth:'квінта',octave:'октава',seventh:'септима',scale:'нота ладу',tone:'нота акорду'};
+function boardSVG(b,compact){
+  const n=b.strings,names=n===4?['E','A','D','G']:['E','A','D','G','B','E'],gap=compact?(n===4?16:14):(n===4?20:16),top=compact?20:22,nutx=34;
+  const cells=b.last-b.first+1,cw=(236-nutx)/cells,W=nutx+cells*cw+8,H=top+(n-1)*gap+14;
+  const y=i=>top+(n-1-i)*gap,fx=f=>nutx+(f-b.first+.5)*cw;
+  let g=`<g style="stroke:#8b93a1;fill:none">`;
+  for(let i=0;i<n;i++)g+=`<line x1="${nutx}" y1="${y(i)}" x2="${nutx+cells*cw}" y2="${y(i)}" stroke-width="${(1+(n-1-i)*.18).toFixed(2)}"/>`;
+  for(let j=0;j<=cells;j++)g+=`<line x1="${nutx+j*cw}" y1="${top-4}" x2="${nutx+j*cw}" y2="${top+(n-1)*gap+4}" stroke-width="${j===0&&b.first===1?4:1}"/>`;
+  g+='</g>';
+  names.forEach((t,i)=>g+=`<text x="9" y="${y(i)+3}" font-size="9" text-anchor="middle" style="fill:var(--dim)">${t}</text>`);
+  if(b.first>1)g+=`<text x="${nutx+cw/2}" y="11" font-size="10" text-anchor="middle" style="fill:var(--text)">лад ${b.first}</text>`;
+  (b.muted||[]).forEach(i=>g+=`<text x="${nutx-12}" y="${y(i)+4}" font-size="12" font-weight="700" text-anchor="middle" style="fill:var(--dim)">×</text>`);
+  const r=Math.min(compact?7:8,gap*.45);
+  if(b.barre){const br=r*.85,bx=fx(b.barre.fret);
+    g+=`<rect class="barre" x="${bx-br}" y="${y(b.barre.to)-br}" width="${2*br}" height="${y(b.barre.from)-y(b.barre.to)+2*br}" rx="${br}" style="fill:#e9edf4;fill-opacity:.2;stroke:#e9edf4;stroke-opacity:.5"/>`}
+  b.dots.forEach(d=>{const cx=d.fret===0?nutx-12:fx(d.fret);
+    g+=`<circle class="dot" cx="${cx}" cy="${y(d.string)}" r="${r}" style="fill:${ROLE_CLR[d.role]};stroke:none"/>`+
+       `<text x="${cx}" y="${y(d.string)+3}" font-size="${r>7?8:7}" font-weight="700" text-anchor="middle" style="fill:#04222a">${d.note}</text>`});
+  return`<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
+}
+const legend=b=>`<div class="legend">${[...new Set(b.dots.map(d=>d.role))].map(r=>`<span><i style="background:${ROLE_CLR[r]}"></i>${ROLE_TXT[r]}</span>`).join('')}</div>`;
+/* ---------- аплікатури ---------- */
+const shapeBox=(s,label,compact)=>`<div class="shape${s.recommended?' rec':''}"><div class="board">${boardSVG(s.board,compact)}</div>
+  <div class="cap">${label?`<b>${label}</b> · `:''}${s.shape}${s.fret?` · лад ${s.fret}`:''}${s.recommended?' <span class="badge">рекомендовано</span>':''}</div></div>`;
+const shapesLegend=list=>legend({dots:list.flatMap(x=>x.board.dots)});
+
+/* ---------- плашка по кліку на сектор: поради для БУДЬ-ЯКОГО акорду з сервера ---------- */
+const pop=$('pop');let popName=null,popX=0,popY=0,popAdv=null;
+function placePop(){
+  const card=$('circlecard'),cw=card.clientWidth,ch=card.clientHeight,w=pop.offsetWidth,h=pop.offsetHeight,gap=24;
+  let left=popX<cw/2?popX+gap:popX-w-gap;              // збоку від клікнутого сектора, до центру екрана
+  left=Math.max(8,Math.min(left,cw-w-8));
+  pop.style.left=left+'px';pop.style.top=Math.max(8,Math.min(popY-h/2,ch-h-8))+'px';
+}
+function renderPop(){
+  if(!popName)return;
+  pop.innerHTML=`<button class="x" title="Закрити">✕</button><h4>${popName}<small>${TABS[tab]}</small></h4>`+(popAdv?nowHTML(popAdv,false):'<span class="dim">завантаження…</span>');
+  pop.querySelector('.x').onclick=closePop;pop.style.display='block';placePop();
+}
+function closePop(){popName=null;popAdv=null;pop.style.display='none';document.querySelectorAll('.seg.pick').forEach(s=>s.classList.remove('pick'))}
+function showPop(name,g,e){
+  closePop();g.classList.add('pick');popName=name;
+  const rc=$('circlecard').getBoundingClientRect();popX=e.clientX-rc.left;popY=e.clientY-rc.top;renderPop();
+  fetch('/api/advice?chord='+encodeURIComponent(name)).then(r=>{if(!r.ok)throw 0;return r.json()})
+    .then(a=>{if(popName===name){popAdv=a;renderPop()}})
+    .catch(()=>{if(popName===name)pop.innerHTML='<span class="dim">не вдалося отримати підказки</span>'});
+}
+document.addEventListener('click',e=>{if(!pop.contains(e.target))closePop();if(!$('allpanel').contains(e.target)&&e.target!==$('allbtn'))$('allpanel').classList.remove('open')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop()});
+
+/* ---------- панелі інструментів ---------- */
+let tab='guitar',last=null,ws,calib=false;
+for(const k in TABS){const b=document.createElement('button');b.className='tab'+(k===tab?' on':'');b.textContent=TABS[k];
+  b.onclick=()=>{tab=k;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));renderHUD();renderPop()};$('tabs').appendChild(b)}
+
+function nowHTML(a,withFret=true){
+  const I=a.instruments;
+  if(tab==='guitar'){const sh=I.guitar.now.slice(0,withFret?2:3);return`<div class="row">${sh.map(x=>shapeBox(x,null,!withFret)).join('')}</div>${shapesLegend(sh)}`+
+    (withFret?`<div class="row dim">позиція першої гітари, лад: <input type="number" id="fret" min="0" max="12" placeholder="—"></div>`:'')}
+  if(tab==='bass'){const b=I.bass;
+    return`<div class="board">${boardSVG(b.box,!withFret)}</div>${legend(b.box)}<span class="dim">лад ${b.box.first>1?b.box.first:'0–'+b.box.last} · корінь → квінта → октава${b.seventh?' (+ септима)':''}</span>`}
+  if(tab==='keys'){const k=I.keys;
+    return`<div class="row">${k.voicings.map(v=>`<div class="vo">${pianoSVG(v.midi,k.rootpc)}<div class="dim cap">${v.label}</div></div>`).join('')}</div>
+      <div class="dim cap">розширення: ${k.extensions.slice(0,withFret?3:4).map(e=>`<b>${e.name}</b>`).join(' · ')}</div>`}
+  const sl=I.solo;
+  return`<div class="board">${boardSVG(sl.box,!withFret)}</div><div class="dim cap">${sl.box.title} · бокс на грифі</div>${legend(sl.box)}
+    ${sl.mode?`<div><b>${sl.mode.name}</b> <span class="dim">${sl.mode.notes.join(' ')}</span></div>`:''}
+    ${sl.blues?`<div class="dim cap">блюзова: ${sl.blues.notes.join(' ')}</div>`:''}`;
+}
+function nextBody(a,i,n){
+  const I=a.instruments;
+  if(tab==='guitar')return shapeBox(I.guitar.next[i].shape);
+  if(tab==='bass'){const b=I.bass.to_next[i];
+    return`<div class="board">${boardSVG(b.box)}</div><span class="dim cap">підхід: ${b.chromatic_below}${b.diatonic_below?' / '+b.diatonic_below:''}</span>`}
+  if(tab==='keys'){const v=I.keys.voice_leading[i];return`<div class="vo">${pianoSVG(v.midi,v.rootpc)}<div class="dim cap">${v.inversion}</div></div>`}
+  return`<div class="board">${boardSVG(n.box)}</div><span class="dim cap">${n.pent.join(' ')}</span>`;
+}
+function renderHUD(){
+  if(!last){$('now').innerHTML='<span class="dim">Зіграйте акорд — підказки з\'являться тут.</span>';$('next').innerHTML='';return}
+  $('now').innerHTML=nowHTML(last);
+  $('next').innerHTML=last.next.map((n,i)=>`<div class="nc${n.priority?' pri':n.diatonic?' dia':''}"><h4><b>${n.chord}</b><span>${n.priority?'<span class="star">★</span> ':''}${n.label}</span></h4>${nextBody(last,i,n)}</div>`).join('');
+  swap($('now'));swap($('next'));
+  const f=$('fret');if(f)f.onchange=()=>ws.send(JSON.stringify({type:'avoid_fret',fret:f.value}));
+}
+
+/* ---------- WebSocket ---------- */
+const TYPE_LABEL={'':'maj','m':'min','7':'7','maj7':'maj7','m7':'m7','sus2':'sus2','sus4':'sus4','dim':'dim','dim7':'dim7','aug':'aug','5':'5'};
+let rev=-1,hnShown=0;
+function setIdle(f){document.body.classList.toggle('idle',!!f);svg.classList.toggle('idle',!!f)}
+function onChord(m){
+  setIdle(m.idle);
+  if(m.advice&&m.rev!==rev){                 // нова/змінена порада — перемалювати; інакше нічого не чіпаємо
+    rev=m.rev;last=m.advice;
+    $('nowchord').textContent=last.root;
+    const bt=$('nowtype');bt.textContent=TYPE_LABEL[last.type]||last.type;bt.classList.toggle('base',last.type===''||last.type==='m');
+    $('nowkey').textContent=last.chord+(last.key?' · тональність ≈ '+last.key.name:'')+(last.role?' · '+last.role:'');
+    paintCircle(last);renderHUD();renderPop();
+  }
+  if(m.hn!==hnShown){                        // стрічка: анімуємо лише нові плашки
+    const fresh=Math.max(0,m.hn-hnShown);hnShown=m.hn;
+    const tail=m.history.slice(-8);
+    $('tl').innerHTML=tail.map((c,i)=>`<span class="h${i>=tail.length-fresh?' new':''}">${c}</span>`).join('');
+    $('allbtn').textContent=`Усі (${m.history.length}) ▴`;
+    $('allpanel').innerHTML=m.history.map((c,i)=>`<span><i>${i+1}</i>${c}</span>`).reverse().join('');
+  }
+}
+$('allbtn').onclick=e=>{e.stopPropagation();$('allpanel').classList.toggle('open')};
+function onLevel(m){
+  const map=v=>Math.min(100,Math.sqrt(v/0.15)*100);
+  $('bar').style.width=map(m.rms)+'%';$('bar').classList.toggle('open',!!m.open);
+  if(m.gate)$('gate').style.left=map(m.gate)+'%';
+  if(m.calibrating){calib=true;$('status').textContent='калібрування шуму… мовчіть'}
+  else if(calib){calib=false;$('status').textContent='слухаю'}
+}
+function connect(){
+  ws=new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen=()=>{$('dot').classList.add('on');$('status').textContent='підключено'};
+  ws.onclose=()=>{$('dot').classList.remove('on');$('status').textContent='немає зв\'язку, повтор…';setTimeout(connect,1000)};
+  ws.onmessage=e=>{const m=JSON.parse(e.data);
+    if(m.type==='level')onLevel(m);else if(m.type==='chord')onChord(m);
+    else if(m.type==='idle')setIdle(true);else if(m.type==='resume')setIdle(false);
+    else if(m.type==='status')$('status').textContent=m.msg;
+    else if(m.type==='error')$('status').textContent='⚠ '+m.msg};
+}
+connect();renderHUD();
+</script>
+</body>
+</html>
